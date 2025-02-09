@@ -5,11 +5,6 @@
 HEAR:<Please go to waypoint 1> ===> GOTO_WAYPOINT:<1>
 HEAR:<Please go to waypoint 2> ===> GOTO_WAYPOINT:<2>
 
-# Object Recognition Mappings
-SEE:<RED BOX> ===> SPEAK:<I see the red box>
-SEE:<BLUE BOX> ===> GOTO_WAYPOINT:<1>
-SEE:<GREEN BOX> ===> GOTO_WAYPOINT:<2>
-
 # Waypoint Arrival Confirmations
 AT_WAYPOINT:<1> ===> SPEAK:<I have arrived at waypoint 1 near the door>
 AT_WAYPOINT:<2> ===> SPEAK:<I have arrived at waypoint 2 near the corner>

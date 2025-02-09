@@ -11,6 +11,7 @@ import math
 import tf2_ros
 from tf2_ros import TransformException
 from rclpy.duration import Duration
+from ament_index_python.packages import get_package_share_directory
 
 class B4MBridge(Node):
     def __init__(self):
@@ -21,7 +22,10 @@ class B4MBridge(Node):
         
         # Define waypoints (these should match your map)
         self.waypoints = {
-            '1': {'x': 1.0, 'y': 0.0, 'z': 0.0, 'w': 1.0},  # Example coordinates
+            # Waypoint 1 is near the door
+            '1': {'x': 2.0, 'y': 0.0, 'z': 0.0, 'w': 1.0},  # Door location
+            # Waypoint 2 is in the corner
+            '2': {'x': 2.0, 'y': 2.0, 'z': 0.0, 'w': 1.0},  # Corner location
         }
         
         # Publishers
@@ -30,7 +34,7 @@ class B4MBridge(Node):
         self.goal_pub = self.create_publisher(PoseStamped, '/goal_pose', 10)
         
         # Subscribers
-        self.create_subscription(String, 'speech_input', self.speech_callback, 10)
+        self.create_subscription(String, '/speech_text', self.speech_callback, 10)
         self.create_subscription(Image, 'camera/image_raw', self.vision_callback, 10)
         self.create_subscription(Odometry, 'odom', self.pose_callback, 10)
         
@@ -43,8 +47,11 @@ class B4MBridge(Node):
     def load_lookup_table(self):
         lookup_dict = {}
         try:
-            # Look for the lookup table in the workspace root
-            lookup_file = '/home/vagrant/Turtlebot3_B4M_Vagrant/b4m_bridge_lookup_table.txt'
+            # Get the package share directory and construct path to lookup table
+            pkg_dir = get_package_share_directory('b4m_bridge')
+            lookup_file = os.path.join(pkg_dir, 'config', 'b4m_bridge_lookup_table.txt')
+            
+            self.get_logger().info(f'Looking for lookup table at: {lookup_file}')
             
             with open(lookup_file, 'r') as f:
                 for line in f:

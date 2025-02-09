@@ -5,16 +5,14 @@ b4m_bridge
 We have created a ROS2 node called "b4m_bridge". The "b4m_bridge" node will receive sensor data from the robot, process it, and provide instructions for the robot to perform certain actions.
 
 # Integration
-The b4m_bridge node will be integrated into the turtlebot3 webots simulation. It will subscribe to sensor data and publish instructions to the robot.
+The b4m_bridge node will subscribe to sensor data and publish instructions to the robot.
 
 # b4m_bridge Node
 Develop a ROS2 node called "b4m_bridge" which subscribes to sensor data from the robot. Sensor data includes: 
-    object recognition (video)
     text (from speech-to-text conversion)
     robot location (waypoint identifier)
 
 The b4m_bridge node takes this sensor data and converts it to "B4M_messages" with the following format:
-    object recognized from video ===> SEE:<object name>
     speech-to-text ===> text received ===> HEAR:<text received>
     Robot arrived at Nav2 waypoint identifier ===> AT_WAYPOINT:<waypoint ID>
 
@@ -37,7 +35,7 @@ Implement ROS2 topics or services for communication between the robot and the b4
 In the case that a malformed message is received by the b4m_bridge node, the node should ignore the message and continue processing other messages.
 
 # Topics/Services
-Input Topic: Robot publishes sensor data (e.g., camera feed, positional data) to this topic.
+Input Topic: Robot publishes sensor data (e.g., speech-to-text, positional data) to this topic.
 Output Topic: b4m_bridge node publishes instructions for the robot (e.g., move commands, interaction cues) to this topic.
 Message Types: Define relevant message structures, for example:
 Sensor data: Image, Odometry, or custom message types.

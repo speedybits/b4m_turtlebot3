@@ -13,6 +13,7 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
+        (os.path.join('share', package_name, 'config'), ['b4m_bridge/b4m_bridge_lookup_table.txt']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -24,7 +25,6 @@ setup(
     entry_points={
         'console_scripts': [
             'b4m_bridge = b4m_bridge.b4m_bridge_node:main',
-            'speech_to_text = b4m_bridge.speech_to_text_node:main',
         ],
     },
 )
