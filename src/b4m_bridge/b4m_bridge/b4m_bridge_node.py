@@ -70,8 +70,13 @@ class B4MBridge(Node):
     def process_message(self, b4m_message):
         """Process a B4M message using the lookup table"""
         self.get_logger().info(f'Processing message: {b4m_message}')
-        if b4m_message in self.lookup_table:
-            action = self.lookup_table[b4m_message]
+        
+        # Convert lookup table keys to lowercase for case-insensitive matching
+        lookup_dict_lower = {k.lower(): v for k, v in self.lookup_table.items()}
+        
+        # Look up the message in a case-insensitive way
+        if b4m_message.lower() in lookup_dict_lower:
+            action = lookup_dict_lower[b4m_message.lower()]
             self.get_logger().info(f'Found action: {action}')
             self.execute_action(action)
         else:
