@@ -5,7 +5,7 @@ from rclpy.node import Node
 from std_msgs.msg import String
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Odometry
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import CompressedImage
 import os
 import math
 import tf2_ros
@@ -35,7 +35,7 @@ class B4MBridge(Node):
         
         # Subscribers
         self.create_subscription(String, '/speech_text', self.speech_callback, 10)
-        self.create_subscription(Image, 'camera/image_raw', self.vision_callback, 10)
+        self.create_subscription(CompressedImage, 'b4m/camera/image', self.vision_callback, 10)
         self.create_subscription(Odometry, 'odom', self.pose_callback, 10)
         
         # Set up TF buffer and listener
@@ -150,32 +150,29 @@ class B4MBridge(Node):
 
     def speech_callback(self, msg):
         """Handle incoming speech messages"""
-        self.get_logger().info(f'Received speech message: {msg.data}')
-        b4m_message = f'HEAR:<{msg.data}>'  # Add B4M protocol formatting here
+        self.get_logger().info(f'Received speech: {msg.data}')
+        b4m_message = f'HEAR:<{msg.data}>'
         self.process_message(b4m_message)
 
     def vision_callback(self, msg):
-        """Handle incoming vision data (simplified)"""
-        # In a real implementation, this would process the image and detect objects
-        # For now, we'll just log that we received an image
-        self.get_logger().debug('Received camera image')
+        """Handle incoming compressed images"""
+        self.get_logger().info('Received compressed image')
+        # Create a B4M message for the image
+        b4m_message = 'SEE:<image.jpg>'
+        self.process_message(b4m_message)
 
     def pose_callback(self, msg):
         """Handle robot pose updates"""
-        # This is where we would implement waypoint tracking
+        # This could be used to track the robot's position and determine when
+        # it has reached a waypoint, triggering an AT_WAYPOINT message
         pass
 
 def main(args=None):
     rclpy.init(args=args)
     node = B4MBridge()
-    
-    try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        node.destroy_node()
-        rclpy.shutdown()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
 
 if __name__ == '__main__':
     main()

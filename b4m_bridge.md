@@ -2,7 +2,7 @@
 b4m_bridge
 
 # Objective
-We have created a ROS2 node called "b4m_bridge". The "b4m_bridge" node will receive sensor data from the robot, process it, and provide instructions for the robot to perform certain actions.
+We have created a ROS2 node called "b4m_bridge". The "b4m_bridge" node will receive sensor data from the robot, process it, and provide instructions for the robot to perform certain actions. The b4m_bridge will also deliver actions to the robot.
 
 # Integration
 The b4m_bridge node will subscribe to sensor data and publish instructions to the robot.
@@ -13,8 +13,13 @@ Develop a ROS2 node called "b4m_bridge" which subscribes to sensor data from the
     robot location (waypoint identifier)
 
 The b4m_bridge node takes this sensor data and converts it to "B4M_messages" with the following format:
+    camera ===> SEE:<image.jpg>
     speech-to-text ===> text received ===> HEAR:<text received>
     Robot arrived at Nav2 waypoint identifier ===> AT_WAYPOINT:<waypoint ID>
+
+The b4m_bridge node will also be able to receive instructions in the following format:
+    SPEAK:<text to speak> ===> Instructs the robot to speak the specified text
+    GOTO_WAYPOINT:<1> ===> Instructs the robot to go to the specified waypoint
 
 These "B4M_messages" are then passed to a lookup table to determine the appropriate action.
 

@@ -1,6 +1,9 @@
 # B4M Bridge Lookup Table
 # Format: INPUT_MESSAGE ===> OUTPUT_ACTION
 
+# Visual Object Mappings
+SEE:<image.jpg> ===> GOTO_WAYPOINT:<1>
+
 # Voice Command Mappings
 HEAR:<Please go to waypoint 1> ===> GOTO_WAYPOINT:<1>
 HEAR:<Please go to waypoint 2> ===> GOTO_WAYPOINT:<2>
