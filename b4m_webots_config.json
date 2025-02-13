@@ -1,0 +1,14 @@
+{
+  "preferences": {
+    "OpenGL": {
+      "disableShadows": true,
+      "disableAntiAliasing": true,
+      "textureQuality": "low",
+      "GTAO": false
+    },
+    "CPU": {
+      "threadsCount": "auto",
+      "timeStep": 32
+    }
+  }
+}

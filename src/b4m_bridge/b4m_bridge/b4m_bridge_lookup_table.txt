@@ -8,6 +8,6 @@ SEE:<image.jpg> ===> GOTO_WAYPOINT:<1>
 HEAR:<Please go to waypoint 1> ===> GOTO_WAYPOINT:<1>
 HEAR:<Please go to waypoint 2> ===> GOTO_WAYPOINT:<2>
 
-# Waypoint Arrival Confirmations
+# Waypoint Arrival Mappings
 AT_WAYPOINT:<1> ===> SPEAK:<I have arrived at waypoint 1 near the door>
 AT_WAYPOINT:<2> ===> SPEAK:<I have arrived at waypoint 2 near the corner>

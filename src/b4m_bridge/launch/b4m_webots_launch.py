@@ -4,12 +4,9 @@ from launch import LaunchDescription
 from launch.actions import (
     IncludeLaunchDescription,
     DeclareLaunchArgument,
-    RegisterEventHandler,
     TimerAction,
     LogInfo
 )
-from launch.conditions import IfCondition
-from launch.event_handlers import OnProcessStart
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
@@ -18,7 +15,7 @@ import os
 
 def generate_launch_description():
     # Add debug logging
-    debug_log = LogInfo(msg='[DEBUG] Starting turtlebot3_webots_nav launch')
+    debug_log = LogInfo(msg='[DEBUG] Starting b4m_webots_launch')
     
     # Declare all launch arguments
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
@@ -30,7 +27,6 @@ def generate_launch_description():
     robot_name = 'TurtleBot3Burger'  # Must match exactly with the camera topic prefix
     
     # Paths for various packages
-    nav2_bringup_path = FindPackageShare('nav2_bringup')
     slam_toolbox_path = FindPackageShare('slam_toolbox')
     webots_turtlebot_path = FindPackageShare('webots_ros2_turtlebot')
     
@@ -41,8 +37,8 @@ def generate_launch_description():
         description='Use simulation time'
     )
     
-    # Include Webots launch with debug
-    webots_debug = LogInfo(msg='[DEBUG] Starting Webots launch')
+    # Include Webots launch with navigation enabled
+    webots_debug = LogInfo(msg='[DEBUG] Starting Webots launch with navigation')
     webots_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             PathJoinSubstitution([
@@ -55,7 +51,8 @@ def generate_launch_description():
             'use_sim_time': use_sim_time,
             'world': world,
             'robot_name': robot_name,
-            'mode': 'realtime'
+            'mode': 'realtime',
+            'nav': 'true'  # Enable navigation and RViz2
         }.items()
     )
     
@@ -71,27 +68,6 @@ def generate_launch_description():
                         slam_toolbox_path,
                         'launch',
                         'online_async_launch.py'
-                    ])
-                ]),
-                launch_arguments={
-                    'use_sim_time': use_sim_time
-                }.items()
-            )
-        ]
-    )
-    
-    # Include Nav2 launch with debug
-    nav2_debug = LogInfo(msg='[DEBUG] Starting Nav2 launch')
-    nav2_launch = TimerAction(
-        period=10.0,  # delay in seconds
-        actions=[
-            nav2_debug,
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([
-                    PathJoinSubstitution([
-                        nav2_bringup_path,
-                        'launch',
-                        'navigation_launch.py'
                     ])
                 ]),
                 launch_arguments={
@@ -149,9 +125,8 @@ def generate_launch_description():
         
         # Main launches with sequential timing
         webots_debug,
-        webots_launch,
+        webots_launch,  # This includes Nav2 and RViz2
         slam_launch,
-        nav2_launch,
         b4m_bridge_launch,
         set_initial_pose,
         
