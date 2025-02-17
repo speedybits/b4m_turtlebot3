@@ -29,6 +29,13 @@ target_link_libraries(b4m_camera_node ${OpenCV_LIBS})
 install(TARGETS b4m_camera_node
   DESTINATION lib/${PROJECT_NAME})
 
+# Install launch and urdf files
+install(DIRECTORY
+  launch
+  urdf
+  DESTINATION share/${PROJECT_NAME}
+)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()

@@ -1,0 +1,83 @@
+<?xml version="1.0" ?>
+<robot name="TurtleBot3Burger">
+  <!-- Camera Link -->
+    <link name="camera_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.015 0.03 0.027"/>
+            </geometry>
+            <material name="camera_material">
+                <color rgba="0.1 0.1 0.1 1"/>
+            </material>
+        </visual>
+    </link>
+
+    <!-- Camera Joint -->
+    <joint name="camera_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="camera_link"/>
+        <origin xyz="0.06 0 0.1" rpy="0 0 0"/>
+    </joint>
+    
+    <webots>
+        <device reference="LDS-01" type="Lidar">
+            <ros>
+                <enabled>true</enabled>
+                <updateRate>5</updateRate>
+                <topicName>/scan</topicName>
+                <alwaysOn>false</alwaysOn>
+                <frameName>LDS-01</frameName>
+            </ros>
+        </device>
+
+        <plugin type="webots_ros2_driver::Ros2IMU">
+            <enabled>true</enabled>
+            <updateRate>20</updateRate>
+            <topicName>/imu</topicName>
+            <alwaysOn>false</alwaysOn>
+            <frameName>imu_link</frameName>
+            <inertialUnitName>inertial_unit</inertialUnitName>
+            <gyroName>gyro</gyroName>
+            <accelerometerName>accelerometer</accelerometerName>
+        </plugin>
+
+        <!-- Camera Device -->
+        <device reference="camera" type="Camera">
+            <properties>
+                <width>640</width>
+                <height>480</height>
+                <fieldOfView>1.047</fieldOfView>
+                <antiAliasing>true</antiAliasing>
+                <noise>0.0</noise>
+            </properties>
+            <ros>
+                <topicName>/TurtleBot3Burger/camera/image_raw</topicName>
+                <alwaysOn>true</alwaysOn>
+                <updateRate>10</updateRate>
+                <enabled>true</enabled>
+            </ros>
+            <lookupTable>0 0 0 1 1000 0</lookupTable>
+        </device>
+
+        <plugin type="webots_ros2_control::Ros2Control" />
+
+        <plugin type="webots_ros2_turtlebot.plugin_example.PluginExample">
+            <parameterExample>someValue</parameterExample>
+        </plugin>
+    </webots>
+
+    <ros2_control name="WebotsControl" type="system">
+        <hardware>
+            <plugin>webots_ros2_control::Ros2ControlSystem</plugin>
+        </hardware>
+        <joint name="right wheel motor">
+            <state_interface name="position"/>
+            <command_interface name="velocity"/>
+        </joint>
+        <joint name="left wheel motor">
+            <state_interface name="position"/>
+            <command_interface name="velocity"/>
+        </joint>
+    </ros2_control>
+</robot>

@@ -26,6 +26,8 @@ class B4MBridge(Node):
             '1': {'x': 2.0, 'y': 0.0, 'z': 0.0, 'w': 1.0},  # Door location
             # Waypoint 2 is in the corner
             '2': {'x': 2.0, 'y': 2.0, 'z': 0.0, 'w': 1.0},  # Corner location
+            # Blue box location
+            'blue_box': {'x': 2.0, 'y': 1.0, 'z': 0.0, 'w': 1.0},  # Blue box location
         }
         
         # Publishers

@@ -62,6 +62,7 @@ NODES_TO_KILL=(
     "component_container"
     "b4m_bridge"           # Added b4m_bridge
     "b4m_voice"            # Added b4m_voice
+    "b4m_camera"           # Added b4m_camera
 )
 
 # Stop each node

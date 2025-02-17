@@ -19,16 +19,20 @@ def generate_launch_description():
     
     # Declare all launch arguments
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
-    world = PathJoinSubstitution([
-        FindPackageShare('webots_ros2_turtlebot'),
-        'worlds',
-        'turtlebot3_burger_example.wbt'
-    ])
+    
+    # Get the path to our custom world file using FindPackageShare
+    b4m_bridge_path = FindPackageShare('b4m_bridge')
+    world = PathJoinSubstitution([b4m_bridge_path, 'worlds', 'b4m_world.wbt'])
+    
+    # Log the world file path for debugging
+    world_debug = LogInfo(msg=f'[DEBUG] Using world file from package share')
+    
     robot_name = 'TurtleBot3Burger'  # Must match exactly with the camera topic prefix
     
     # Paths for various packages
     slam_toolbox_path = FindPackageShare('slam_toolbox')
     webots_turtlebot_path = FindPackageShare('webots_ros2_turtlebot')
+    b4m_camera_path = FindPackageShare('b4m_camera')
     
     # Launch Arguments
     declare_use_sim_time = DeclareLaunchArgument(
@@ -49,10 +53,8 @@ def generate_launch_description():
         ]),
         launch_arguments={
             'use_sim_time': use_sim_time,
-            'world': world,
-            'robot_name': robot_name,
-            'mode': 'realtime',
-            'nav': 'true'  # Enable navigation and RViz2
+            'robot_description_overlay': PathJoinSubstitution([b4m_camera_path, 'urdf', 'b4m_camera.urdf']),
+            'world': world
         }.items()
     )
     
@@ -119,6 +121,9 @@ def generate_launch_description():
     return LaunchDescription([
         # Debug logging
         debug_log,
+        
+        # Log the world file path for debugging
+        world_debug,
         
         # Launch arguments
         declare_use_sim_time,
