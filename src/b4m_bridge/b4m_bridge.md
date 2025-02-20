@@ -13,24 +13,19 @@ Develop a ROS2 node called "b4m_bridge" which subscribes to sensor data from the
     robot location (waypoint identifier)
 
 The b4m_bridge node takes this sensor data and converts it to "B4M_messages" with the following format:
-    camera ===> SEE:<image.jpg>
     speech-to-text ===> text received ===> HEAR:<text received>
     Robot arrived at Nav2 waypoint identifier ===> AT_WAYPOINT:<waypoint ID>
 
-The b4m_bridge node will also be able to receive instructions in the following format:
+These "B4M_messages" are then sent as a message using the Bike4Mind API client as described here:
+https://pypi.org/project/bike4py/
+
+The response from the Bike4Mind API client is then processed by the b4m_bridge node and converted to an action to be published to the robot:
     SPEAK:<text to speak> ===> Instructs the robot to speak the specified text
     GOTO_WAYPOINT:<1> ===> Instructs the robot to go to the specified waypoint
 
-These "B4M_messages" are then passed to a lookup table to determine the appropriate action.
-
-The lookup table will be a text file called "b4m_bridge_lookup_table.txt" with the following format:
-    INPUT_MESSAGE ===> OUTPUT_ACTION
-
-The lookup table information will be stored in a file called "b4m_bridge_lookup_table.txt".
-
 # Waypoints
-- Waypoints are defined in the lookup table and are used to navigate the robot to specific locations in the environment.
-- For now, there are 2 waypoints: 1 and 2, and they are hard-coded in the lookup table.
+- Waypoints are pre-defined locations in the environment
+- For now, there are 2 waypoints: 1 and 2 in the simulation.
 - Waypoint 1 is near the door, and Waypoint 2 is near one of the corners of the room.
 
 # Communication
