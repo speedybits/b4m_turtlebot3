@@ -20,14 +20,23 @@ class B4MBridge(Node):
         super().__init__('b4m_bridge')
         
         # Initialize Bike4Mind API client
-        refresh_token = os.getenv('B4M_REFRESH_TOKEN')
-        notebook_id = os.getenv('B4M_NOTEBOOK_ID')
-        if not refresh_token or not notebook_id:
-            self.get_logger().error('B4M_REFRESH_TOKEN and B4M_NOTEBOOK_ID environment variables must be set')
-            raise ValueError('B4M_REFRESH_TOKEN and B4M_NOTEBOOK_ID environment variables must be set')
+        token_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'b4m_API_token.txt')
+        try:
+            with open(token_file, 'r') as f:
+                refresh_token = f.read().strip()
+        except FileNotFoundError:
+            self.get_logger().error(f'b4m_API_token.txt not found at {token_file}. Please create this file with your B4M refresh token.')
+            raise
+        except Exception as e:
+            self.get_logger().error(f'Error reading B4M refresh token: {str(e)}')
+            raise
+
+        if not refresh_token:
+            self.get_logger().error('B4M refresh token cannot be empty')
+            raise ValueError('B4M refresh token cannot be empty')
         
         self.b4m_client = LLMClient(refresh_token=refresh_token)
-        self.notebook_id = notebook_id
+        self.notebook_id = 'b4m_robot'
         self.event_loop = asyncio.get_event_loop()
         
         # Connect to websocket
