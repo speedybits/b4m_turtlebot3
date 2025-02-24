@@ -1,1 +1,58 @@
 b4m_API_token.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ROS/ROS2
+build/
+devel/
+install/
+log/
+logs/
+.catkin_workspace
+.catkin_tools/
+*.bag
+
+# Build directories
+build/
+install/
+log/
+
+# Resources and generated files
+resource/
+
+# Temporary files
+*.swp
+*.swo
+*~
+.DS_Store
+.directory
+.Trash-*
+.nfs*
+.fuse_hidden*
+
+# Editor specific
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+b4m_api_token.txt

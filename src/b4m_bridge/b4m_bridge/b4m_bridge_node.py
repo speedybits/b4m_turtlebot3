@@ -13,19 +13,34 @@ from tf2_ros import TransformException
 from rclpy.duration import Duration
 from ament_index_python.packages import get_package_share_directory
 import asyncio
-from bike4py import LLMClient, ChatCompletionRequest, StatusEvent, CompletionEvent, ContentEvent
+from bike4py.client import LLMClient, ChatCompletionRequest, StatusEvent, CompletionEvent, ContentEvent
+import json
 
 class B4MBridge(Node):
     def __init__(self):
         super().__init__('b4m_bridge')
         
         # Initialize Bike4Mind API client
-        token_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'b4m_API_token.txt')
+        colcon_prefix_path = os.environ.get('COLCON_PREFIX_PATH', '')
+        if not colcon_prefix_path:
+            self.get_logger().error('COLCON_PREFIX_PATH environment variable not set')
+            raise RuntimeError('COLCON_PREFIX_PATH environment variable not set')
+        
+        # The first path in COLCON_PREFIX_PATH should be our install directory
+        install_dir = colcon_prefix_path.split(':')[0]
+        workspace_root = os.path.dirname(install_dir)
+        token_file = os.path.join(workspace_root, 'b4m_api_token.txt')
+        self.get_logger().info(f'Looking for token file at: {token_file}')
         try:
             with open(token_file, 'r') as f:
-                refresh_token = f.read().strip()
+                token_data = json.load(f)
+                refresh_token = token_data['state']['refreshToken']
+                self.get_logger().info(f'Successfully read token from {token_file}')
         except FileNotFoundError:
-            self.get_logger().error(f'b4m_API_token.txt not found at {token_file}. Please create this file with your B4M refresh token.')
+            self.get_logger().error(f'b4m_api_token.txt not found at {token_file}. Please create this file with your B4M refresh token.')
+            raise
+        except (json.JSONDecodeError, KeyError) as e:
+            self.get_logger().error(f'Error parsing token file: {str(e)}. The file should contain a JSON object with state.refreshToken')
             raise
         except Exception as e:
             self.get_logger().error(f'Error reading B4M refresh token: {str(e)}')
@@ -35,22 +50,28 @@ class B4MBridge(Node):
             self.get_logger().error('B4M refresh token cannot be empty')
             raise ValueError('B4M refresh token cannot be empty')
         
+        # Get notebook ID from parameter or use default
+        self.declare_parameter('notebook_id', 'b4m_robot')
+        self.notebook_id = self.get_parameter('notebook_id').get_parameter_value().string_value
+        
+        self.get_logger().info('Creating B4M client...')
         self.b4m_client = LLMClient(refresh_token=refresh_token)
-        self.notebook_id = 'b4m_robot'
-        self.event_loop = asyncio.get_event_loop()
+        
+        # Get event loop from current thread or create new one
+        try:
+            self.event_loop = asyncio.get_event_loop()
+        except RuntimeError:
+            self.event_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self.event_loop)
         
         # Connect to websocket
-        self.event_loop.run_until_complete(self.b4m_client.connect())
-        
-        # Define waypoints (these should match your map)
-        self.waypoints = {
-            # Waypoint 1 is near the door
-            '1': {'x': 2.0, 'y': 0.0, 'z': 0.0, 'w': 1.0},  # Door location
-            # Waypoint 2 is in the corner
-            '2': {'x': 2.0, 'y': 2.0, 'z': 0.0, 'w': 1.0},  # Corner location
-            # Blue box location
-            'blue_box': {'x': 2.0, 'y': 1.0, 'z': 0.0, 'w': 1.0},  # Blue box location
-        }
+        try:
+            self.get_logger().info('Connecting to B4M websocket...')
+            self.event_loop.run_until_complete(self.b4m_client.connect())
+            self.get_logger().info('Successfully connected to B4M websocket')
+        except Exception as e:
+            self.get_logger().error(f'Failed to connect to B4M websocket: {str(e)}')
+            raise
         
         # Publishers
         self.action_pub = self.create_publisher(String, 'b4m_action', 10)
@@ -62,10 +83,6 @@ class B4MBridge(Node):
         self.create_subscription(CompressedImage, 'b4m/camera/image', self.vision_callback, 10)
         self.create_subscription(Odometry, 'odom', self.pose_callback, 10)
         
-        # Set up TF buffer and listener
-        self.tf_buffer = tf2_ros.Buffer()
-        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
-        
         # Start event processing
         self.event_processing_task = self.event_loop.create_task(self.process_events())
         
@@ -73,8 +90,10 @@ class B4MBridge(Node):
 
     async def process_events(self):
         """Process events from the Bike4Mind API"""
+        self.get_logger().info('Starting event processing loop')
         try:
             async for event in self.b4m_client.stream_events():
+                self.get_logger().debug(f'Received event: {type(event)}')
                 if isinstance(event, StatusEvent):
                     self.get_logger().info(f'Status update: {event.status}')
                 elif isinstance(event, CompletionEvent):
@@ -83,15 +102,35 @@ class B4MBridge(Node):
                     content = event.content
                     self.get_logger().info(f'Content: {content}')
                     # Parse and execute actions from content
-                    await self.execute_action(content)
+                    if ':<' in content and '>' in content:
+                        await self.execute_action(content)
+                    else:
+                        self.get_logger().debug(f'Content does not contain action format: {content}')
         except Exception as e:
             self.get_logger().error(f'Error processing events: {str(e)}')
-
+            # Try to reconnect
+            try:
+                self.get_logger().info('Attempting to reconnect to websocket...')
+                await self.b4m_client.connect()
+                self.get_logger().info('Successfully reconnected to B4M websocket')
+            except Exception as e:
+                self.get_logger().error(f'Failed to reconnect to B4M websocket: {str(e)}')
+                
     async def process_message(self, b4m_message):
         """Process a B4M message using the Bike4Mind API client"""
         self.get_logger().info(f'Processing message: {b4m_message}')
         
         try:
+            # Check if client is connected
+            if not self.b4m_client.is_connected():
+                self.get_logger().error('B4M client is not connected. Attempting to reconnect...')
+                try:
+                    await self.b4m_client.connect()
+                    self.get_logger().info('Successfully reconnected to B4M websocket')
+                except Exception as e:
+                    self.get_logger().error(f'Failed to reconnect to B4M websocket: {str(e)}')
+                    return
+            
             # Create chat completion request
             request = ChatCompletionRequest(
                 sessionId=self.notebook_id,
@@ -99,37 +138,16 @@ class B4MBridge(Node):
             )
             
             # Submit the prompt
-            response = self.b4m_client.submit_prompt(request)
-            self.get_logger().info(f'Submitted prompt: {response}')
+            self.get_logger().info(f'Submitting prompt to B4M client with notebook ID: {self.notebook_id}')
+            try:
+                await self.b4m_client.submit_prompt(request)
+                self.get_logger().info('Successfully submitted prompt')
+            except Exception as e:
+                self.get_logger().error(f'Error submitting prompt: {str(e)}')
+                return
             
         except Exception as e:
             self.get_logger().error(f'Error processing message with Bike4Mind API: {str(e)}')
-
-    def check_transforms(self):
-        """Check if required transforms are available"""
-        try:
-            # Check map->odom transform
-            self.tf_buffer.lookup_transform(
-                'map',
-                'odom',
-                rclpy.time.Time(),
-                timeout=Duration(seconds=1.0)
-            )
-            self.get_logger().info('map->odom transform available')
-            
-            # Check odom->base_link transform
-            self.tf_buffer.lookup_transform(
-                'odom',
-                'base_link',
-                rclpy.time.Time(),
-                timeout=Duration(seconds=1.0)
-            )
-            self.get_logger().info('odom->base_link transform available')
-            return True
-            
-        except TransformException as ex:
-            self.get_logger().error(f'Could not transform: {str(ex)}')
-            return False
 
     async def execute_action(self, action):
         """Execute the appropriate action based on the API response"""
@@ -152,31 +170,19 @@ class B4MBridge(Node):
                 self.get_logger().info(f'Published speech: {action_value}')
                 
             elif action_type == 'GOTO_WAYPOINT':
-                if not self.check_transforms():
-                    self.get_logger().error('Required transforms not available. Cannot navigate.')
-                    return
-                    
-                if action_value in self.waypoints:
-                    waypoint = self.waypoints[action_value]
-                    goal_msg = PoseStamped()
-                    goal_msg.header.frame_id = 'map'
-                    goal_msg.header.stamp = self.get_clock().now().to_msg()
-                    
-                    # Set the goal position
-                    goal_msg.pose.position.x = waypoint['x']
-                    goal_msg.pose.position.y = waypoint['y']
-                    goal_msg.pose.position.z = 0.0
-                    
-                    # Set the goal orientation (quaternion)
-                    goal_msg.pose.orientation.x = 0.0
-                    goal_msg.pose.orientation.y = 0.0
-                    goal_msg.pose.orientation.z = 0.0
-                    goal_msg.pose.orientation.w = waypoint['w']
-                    
-                    self.goal_pub.publish(goal_msg)
-                    self.get_logger().info(f'Published navigation goal for waypoint {action_value}: {waypoint}')
-                else:
-                    self.get_logger().error(f'Unknown waypoint: {action_value}')
+                # Set the goal position
+                goal_msg = PoseStamped()
+                goal_msg.header.frame_id = 'map'
+                goal_msg.header.stamp = self.get_clock().now().to_msg()
+                
+                # Set the goal orientation (quaternion)
+                goal_msg.pose.orientation.x = 0.0
+                goal_msg.pose.orientation.y = 0.0
+                goal_msg.pose.orientation.z = 0.0
+                goal_msg.pose.orientation.w = 1.0
+                
+                self.goal_pub.publish(goal_msg)
+                self.get_logger().info(f'Published navigation goal for waypoint {action_value}')
             else:
                 self.get_logger().warn(f'Unknown action type: {action_type}')
                 
@@ -187,7 +193,8 @@ class B4MBridge(Node):
         """Handle incoming speech messages"""
         self.get_logger().info(f'Received speech: {msg.data}')
         b4m_message = f'HEAR:<{msg.data}>'
-        asyncio.run_coroutine_threadsafe(self.process_message(b4m_message), self.event_loop)
+        future = asyncio.run_coroutine_threadsafe(self.process_message(b4m_message), self.event_loop)
+        future.add_done_callback(lambda f: self.get_logger().info('Speech processing completed') if not f.exception() else self.get_logger().error(f'Speech processing failed: {f.exception()}'))
 
     def vision_callback(self, msg):
         """Handle incoming compressed images"""
@@ -200,27 +207,29 @@ class B4MBridge(Node):
         # Check if we're near any waypoint and send AT_WAYPOINT message if we are
         try:
             current_pos = msg.pose.pose.position
-            for waypoint_id, waypoint in self.waypoints.items():
-                # Calculate distance to waypoint
-                dx = current_pos.x - waypoint['x']
-                dy = current_pos.y - waypoint['y']
-                distance = math.sqrt(dx*dx + dy*dy)
+            # If we're within 0.5 meters of a waypoint, consider we're at it
+            if current_pos.x < 0.5:
+                b4m_message = f'AT_WAYPOINT:<1>'
+                future = asyncio.run_coroutine_threadsafe(self.process_message(b4m_message), self.event_loop)
+                future.add_done_callback(lambda f: self.get_logger().info('Pose processing completed') if not f.exception() else self.get_logger().error(f'Pose processing failed: {f.exception()}'))
                 
-                # If we're within 0.5 meters of a waypoint, consider we're at it
-                if distance < 0.5:
-                    b4m_message = f'AT_WAYPOINT:<{waypoint_id}>'
-                    asyncio.run_coroutine_threadsafe(self.process_message(b4m_message), self.event_loop)
-                    break
-                    
         except Exception as e:
             self.get_logger().error(f'Error in pose callback: {str(e)}')
 
 def main(args=None):
     rclpy.init(args=args)
-    node = B4MBridge()
-    rclpy.spin(node)
-    node.event_loop.close()
-    rclpy.shutdown()
+    
+    # Create and run the node
+    try:
+        node = B4MBridge()
+        rclpy.spin(node)
+    except Exception as e:
+        print(f'Error running node: {str(e)}')
+    finally:
+        # Clean up
+        if 'node' in locals():
+            node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
