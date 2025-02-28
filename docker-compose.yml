@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  ros2_dev:
+    build: .
+    volumes:
+      - .:/workspace
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+      - TURTLEBOT3_MODEL=waffle
+      - WEBOTS_HOME=/usr/local/webots
+    network_mode: host
+    privileged: true  # For hardware access
+    devices:
+      - /dev/dri:/dev/dri  # For GPU acceleration
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]  # Enable GPU support if available
