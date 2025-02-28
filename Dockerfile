@@ -1,6 +1,9 @@
 # Use ROS2 Humble as base image
 FROM ros:humble-ros-base
 
+# Prevent interactive prompts during installation
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     wget \
@@ -13,10 +16,10 @@ RUN apt-get update && apt-get install -y \
     ros-humble-nav2-bringup \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Webots
+# Install Webots (with no interactive prompts)
 RUN wget -q https://github.com/cyberbotics/webots/releases/download/R2023b/webots_2023b_amd64.deb \
     && apt-get update \
-    && apt-get install -y ./webots_2023b_amd64.deb \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y ./webots_2023b_amd64.deb \
     && rm webots_2023b_amd64.deb
 
 # Set up workspace

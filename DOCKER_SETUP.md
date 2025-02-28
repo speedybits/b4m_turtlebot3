@@ -34,6 +34,8 @@ brew install --cask xquartz
 ```bash
 git clone git@github.com:speedybits/b4m_turtlebot3.git
 cd b4m_turtlebot3
+# Switch to the b4m_integration branch
+git checkout b4m_integration
 ```
 
 2. Build the Docker image:
@@ -95,12 +97,19 @@ docker compose build --no-cache
 
 ## Running ROS2 Commands
 
-All ROS2 commands should be run inside the container. For example:
+All ROS2 commands should be run inside the container. To launch Webots with the optimized settings:
 
 ```bash
 # Inside the container
-ros2 launch turtlebot3_gazebo empty_world.launch.py
+./b4m_launch.sh
 ```
+
+The `b4m_launch.sh` script includes:
+- Performance optimization settings for Webots
+- Minimized debug output
+- Proper ROS2 logging configuration
+- Automatic sourcing of ROS2 environment
+- Launch of TurtleBot3 with navigation enabled
 
 ## Troubleshooting
 
@@ -108,6 +117,7 @@ ros2 launch turtlebot3_gazebo empty_world.launch.py
    - Check X11 forwarding setup
    - Ensure DISPLAY variable is set correctly
    - Try restarting XQuartz (Mac) or X server (Linux)
+   - Make sure Webots is not already running in another container or on the host
 
 2. If the container fails to start:
    - Check Docker logs: `docker compose logs`
@@ -117,3 +127,8 @@ ros2 launch turtlebot3_gazebo empty_world.launch.py
 3. If changes to source code don't take effect:
    - Rebuild the workspace: `colcon build`
    - Source the setup file: `source install/setup.bash`
+
+4. If Webots performance is slow:
+   - The script already includes performance optimizations
+   - Check your system's GPU/CPU usage
+   - Consider reducing other system load
