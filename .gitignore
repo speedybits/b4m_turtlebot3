@@ -56,6 +56,3 @@ resource/
 *.sublime-workspace
 *.sublime-project
 b4m_api_token.txt
-
-# Vagrant
-.vagrant/

@@ -18,9 +18,12 @@ export WEBOTS_DEBUG_LEVEL=0
 # Set ROS logging to only show warnings and errors
 export RCUTILS_CONSOLE_LEVEL=30
 
+# Ensure we're using display :99
+export DISPLAY=:99
+
 # Source ROS 2 environment
 source /opt/ros/humble/setup.bash
-source install/setup.bash
+source /workspace/install/setup.bash
 
 # Launch Turtlebot3 with navigation enabled
 ros2 launch b4m_bridge b4m_webots_launch.py

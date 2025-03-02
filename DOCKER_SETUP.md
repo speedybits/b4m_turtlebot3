@@ -1,34 +1,21 @@
-# Docker Setup Instructions
+# Docker Setup for B4M ROS2 Development
 
-This guide explains how to set up and run the ROS2 Turtlebot3 environment using Docker.
+This document describes how to set up and use the Docker development environment for the B4M ROS2 project.
 
 ## Prerequisites
 
-### For Linux:
-```bash
-# Install Docker
-sudo apt-get update
-sudo apt-get remove docker docker-engine docker.io containerd runc
-sudo apt-get update && sudo apt-get install -y ca-certificates curl gnupg
-sudo install -m 0755 -d /etc/apt/keyrings && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg && sudo chmod a+r /etc/apt/keyrings/docker.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-sudo apt-get update && sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+- Docker installed on your system
+- Docker Compose installed on your system
+- Git with SSH access configured
 
-# Add your user to the docker group (logout and login required after this)
-sudo usermod -aG docker $USER
+## Project Structure
 
-# Install X11 requirements (if not already installed)
-sudo apt-get install x11-xserver-utils
-```
+The Docker environment is configured to build and run the following ROS2 packages:
+- `b4m_bridge`: ROS2 bridge node for processing sensor data
+- `b4m_voice`: Voice control package
+- `b4m_camera`: Camera handling package
 
-### For Mac (Apple Silicon):
-1. Install Docker Desktop for Mac from https://www.docker.com/products/docker-desktop/
-2. Install XQuartz:
-```bash
-brew install --cask xquartz
-```
-
-## Building and Running
+## Building the Environment
 
 1. Clone the repository:
 ```bash
@@ -38,19 +25,112 @@ cd b4m_turtlebot3
 git checkout b4m_integration
 ```
 
-2. Build the Docker image:
+2. Build and start the Docker container:
 ```bash
 docker compose build
-```
-
-3. Start the container:
-```bash
 docker compose up -d
 ```
 
-4. Enter the container:
+The build process will:
+- Use ROS2 Humble as the base image
+- Install all necessary ROS2 dependencies
+- Install Python packages including `bike4py`
+- Build the workspace using colcon
+
+### Using the Environment
+
+#### Entering the Container
+
+To enter the Docker container:
 ```bash
 docker compose exec ros2_dev bash
+```
+
+#### Running ROS2 Commands
+
+Once inside the container, you can run ROS2 commands. The environment is already set up with:
+- ROS2 Humble sourced
+- Workspace packages built and sourced
+- All dependencies installed
+
+Common commands:
+```bash
+# List available packages
+ros2 pkg list | grep b4m
+
+# List available topics
+ros2 topic list
+
+# Run nodes from b4m_bridge
+ros2 run b4m_bridge <node_name>
+
+# Run nodes from b4m_voice
+ros2 run b4m_voice <node_name>
+```
+
+#### Development Workflow
+
+1. Make changes to the code on your host machine
+2. Rebuild the workspace in the container:
+```bash
+docker compose exec ros2_dev bash -c "cd /workspace && colcon build"
+```
+3. Source the updated workspace:
+```bash
+source /workspace/install/setup.bash
+```
+
+### Container Configuration
+
+#### Dockerfile
+
+The Dockerfile includes:
+- ROS2 Humble base image
+- Essential ROS2 packages:
+  - geometry_msgs
+  - nav_msgs
+  - sensor_msgs
+  - cv_bridge
+  - image_transport
+- Python development tools
+- Custom entrypoint script for environment setup
+
+#### Docker Compose
+
+The docker-compose.yml configuration:
+- Mounts the workspace directory
+- Sets ROS_DOMAIN_ID for ROS2 communication
+- Uses host network mode for easier ROS2 communication
+
+### Troubleshooting
+
+If you encounter any issues:
+
+1. Ensure all dependencies are installed:
+```bash
+docker compose exec ros2_dev bash -c "ros2 pkg list"
+```
+
+2. Check the workspace build status:
+```bash
+docker compose exec ros2_dev bash -c "source /opt/ros/humble/setup.bash && colcon build --event-handlers console_direct+"
+```
+
+3. Verify environment variables:
+```bash
+docker compose exec ros2_dev env | grep ROS
+```
+
+### Cleaning Up
+
+To stop and remove the container:
+```bash
+docker compose down
+```
+
+To remove all built images and start fresh:
+```bash
+docker compose down --rmi all
 ```
 
 ## X11 Setup for GUI Applications
@@ -97,19 +177,7 @@ docker compose build --no-cache
 
 ## Running ROS2 Commands
 
-All ROS2 commands should be run inside the container. To launch Webots with the optimized settings:
-
-```bash
-# Inside the container
-./b4m_launch.sh
-```
-
-The `b4m_launch.sh` script includes:
-- Performance optimization settings for Webots
-- Minimized debug output
-- Proper ROS2 logging configuration
-- Automatic sourcing of ROS2 environment
-- Launch of TurtleBot3 with navigation enabled
+All ROS2 commands should be run inside the container.
 
 ## Troubleshooting
 

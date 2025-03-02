@@ -1,18 +1,10 @@
 version: '3'
-
 services:
   ros2_dev:
     build: .
     volumes:
       - .:/workspace
-      - /tmp/.X11-unix:/tmp/.X11-unix
     environment:
-      - DISPLAY=${DISPLAY}
-      - QT_X11_NO_MITSHM=1
-      - TURTLEBOT3_MODEL=waffle
-      - WEBOTS_HOME=/usr/local/webots
+      - ROS_DOMAIN_ID=0
     network_mode: host
-    privileged: true  # For hardware access
-    devices:
-      - /dev/dri:/dev/dri  # For GPU acceleration if available
     command: tail -f /dev/null  # Keep container running
