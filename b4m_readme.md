@@ -4,6 +4,43 @@ This repository contains the ROS2 packages for the B4M TurtleBot3 project, focus
 - `b4m_bridge`: ROS2 bridge node for processing sensor data and controlling the robot
 - `b4m_voice`: Voice control package for natural language interaction
 
+## Prerequisites
+
+1. Docker installed and configured (see [DOCKER_SETUP.md](DOCKER_SETUP.md))
+2. B4M API token (required for robot communication)
+3. Working microphone (for voice control)
+
+### Setting up B4M API Token
+
+It'll want an API token. The current place to get that is from Chrome (or your favorite browser). Right-click and go to Inspect, then to the Application tab, then to Local Storage, then be sure you've selected https://app.bike4mind.com/. One of the keys in local storage for the site will be `access-token-storage`, and it'll hold a bit of JSON. One of the JSON keys is `refresh_token` - that's the value it will want.
+
+The token will unfortunately only last a day or two, it seems, and then you'll want to retrieve a new token from the same spot.
+
+Create a file named `b4m_api_token.txt` in the project root with your B4M refresh token:
+```bash
+echo "your_b4m_refresh_token" > b4m_api_token.txt
+```
+
+This token is required for the bridge node to communicate with the robot. Contact your system administrator if you need a token.
+
+### Voice Control Dependencies
+
+The voice control node requires several dependencies that are automatically installed in the Docker image:
+- Python SpeechRecognition library
+- PyAudio for microphone input
+- PortAudio system library
+
+## Why Docker?
+
+This project uses Docker to ensure a consistent development environment across different systems. The Docker container:
+- Provides a pre-configured ROS2 Humble environment with all necessary dependencies
+- Ensures compatibility across Linux and macOS development environments
+- Eliminates "it works on my machine" issues by standardizing the build environment
+- Makes it easy for new developers to get started without manual setup
+- Isolates the ROS2 environment from your system's packages
+
+Before proceeding, make sure you have Docker installed and configured. For detailed setup instructions, including prerequisites and troubleshooting, see [DOCKER_SETUP.md](DOCKER_SETUP.md).
+
 ## Quick Start
 
 1. Clone the repository:
@@ -12,42 +49,21 @@ git clone git@github.com:speedybits/b4m_turtlebot3.git
 cd b4m_turtlebot3
 ```
 
-2. Start the Docker environment:
+2. Set up your B4M API token as described in the Prerequisites section.
+
+3. Run the development launch script:
 ```bash
-docker compose up -d
+./b4m_dev_launch.sh
 ```
 
-3. Build and run the workspace:
-```bash
-# Build just b4m_bridge and b4m_voice
-docker compose exec ros2_dev bash -c "cd /workspace && colcon build --packages-select b4m_bridge b4m_voice"
+The script will:
+- Start the Docker container if it's not running (with all dependencies pre-installed)
+- Build the ROS2 packages
+- Provide instructions for launching the nodes
 
-# Enter the container to run nodes
-docker compose exec ros2_dev bash
-source install/setup.bash
-```
+4. Follow the launch instructions provided by the script to start the bridge and voice nodes in separate terminals.
 
 ## Development Guide
-
-### Accessing the Container
-You can access the Docker container in two ways:
-
-1. Open a new shell in the container:
-```bash
-docker compose exec ros2_dev bash
-```
-
-2. Run a one-off command in the container:
-```bash
-docker compose exec ros2_dev bash -c "your_command_here"
-```
-
-Remember to source the workspace when entering a new shell:
-```bash
-source /workspace/install/setup.bash
-```
-
-To open multiple terminals in the same container, run the first command in each new terminal window.
 
 ### Code Organization
 - `b4m_bridge/`: ROS2 bridge node for processing sensor data and controlling the robot
@@ -63,134 +79,47 @@ To open multiple terminals in the same container, run the first command in each 
    - All changes are immediately reflected in the container due to volume mounting
    - Use Git on your host machine for version control
 
-2. Rebuild after making changes:
+2. After making changes, run the development launch script again to rebuild:
 ```bash
-# Rebuild specific packages
-docker compose exec ros2_dev bash -c "cd /workspace && colcon build --packages-select b4m_bridge b4m_voice"
-
-# Or rebuild all packages
-docker compose exec ros2_dev bash -c "cd /workspace && colcon build"
+./b4m_dev_launch.sh
 ```
 
-3. Source the workspace after rebuilding:
-```bash
-source /workspace/install/setup.bash
-```
+### Testing Voice Control
+Once both nodes are running, you can:
 
-### Development Tips
-- Use `--symlink-install` with colcon build to avoid rebuilding for Python changes:
-```bash
-colcon build --symlink-install --packages-select b4m_voice
-```
-- For C++ changes in `b4m_bridge`, always do a full rebuild of the package
-- Use `colcon build --packages-up-to <package>` to rebuild a package and its dependencies
-- Run tests for your changes:
-```bash
-colcon test --packages-select b4m_bridge b4m_voice
-```
-
-### Common Issues
-- If changes aren't taking effect, ensure you've:
-  1. Rebuilt the affected packages
-  2. Sourced the workspace
-  3. Restarted any running nodes
-- For build errors, check:
-  1. All dependencies are properly listed in `package.xml`
-  2. CMake configuration in `CMakeLists.txt`
-  3. Build output with `--event-handlers console_direct+`
-
-For detailed Docker setup and configuration, see [DOCKER_SETUP.md](DOCKER_SETUP.md).
-
-## Development Workflow
-1. Make changes to the code on your host machine
-2. Rebuild specific packages in the container:
-```bash
-# Rebuild just b4m_bridge and b4m_voice
-docker compose exec ros2_dev bash -c "cd /workspace && colcon build --packages-select b4m_bridge b4m_voice"
-```
-3. Source the updated workspace:
-```bash
-source /workspace/install/setup.bash
-```
-
-### Running the Nodes
-
-1. Enter the container and source the workspace:
-```bash
-docker compose exec ros2_dev bash
-source /workspace/install/setup.bash
-```
-
-2. Run the bridge node:
-```bash
-ros2 run b4m_bridge bridge_node
-```
-
-3. Run the voice control node (in a new terminal):
-```bash
-# In a new terminal, enter the container again
-docker compose exec ros2_dev bash
-source /workspace/install/setup.bash
-
-# Run the voice node
-ros2 run b4m_voice voice_node
-```
-
-### Testing Voice Control with Bridge Node
-1. Start the bridge node in one terminal:
-```bash
-ros2 run b4m_bridge bridge_node
-```
-
-2. In another terminal, start the voice node:
-```bash
-ros2 run b4m_voice voice_node
-```
-
-3. Verify the nodes are communicating:
-```bash
-# Check if both nodes are running
-ros2 node list
-
-# View available topics
-ros2 topic list
-
-# Monitor voice commands being processed
-ros2 topic echo /voice_commands
-
-# Monitor bridge node status
-ros2 topic echo /bridge_status
-```
-
-4. Test basic voice commands:
+1. Test voice commands:
    - Say "move forward" to initiate forward movement
    - Say "stop" to halt the robot
    - Say "turn left" or "turn right" for rotation
    - Say "status" to get the current robot state
 
-Note: Ensure both nodes are running before testing voice commands. The bridge node must be active to process the voice commands and control the robot.
-
-#### Using Text Input Instead of Microphone
-You can send text commands directly to test the voice control system without using a microphone:
-
+2. Use text commands instead of voice:
 ```bash
-# Send a text command
 ros2 topic pub --once /text_commands std_msgs/msg/String "data: 'move forward'"
-
-# Other example commands:
 ros2 topic pub --once /text_commands std_msgs/msg/String "data: 'stop'"
 ros2 topic pub --once /text_commands std_msgs/msg/String "data: 'turn left'"
 ros2 topic pub --once /text_commands std_msgs/msg/String "data: 'status'"
 ```
 
-The voice node processes text commands the same way as voice input, making this method useful for:
-- Testing without a microphone
-- Debugging voice command processing
-- Automating command sequences
-- CI/CD testing
+### Monitoring the System
+Check node and topic status:
+```bash
+# List running nodes
+ros2 node list
+
+# List active topics
+ros2 topic list
+
+# Monitor voice commands
+ros2 topic echo /voice_commands
+
+# Monitor bridge status
+ros2 topic echo /bridge_status
+```
 
 ## Notes
-- This setup focuses on `b4m_bridge` and `b4m_voice` packages for a minimal development environment
 - The Docker container mounts the workspace directory, so you can edit code on your host machine
 - All changes are immediately reflected in the container
 - The container uses network_mode: host for easy ROS2 communication with the host
+
+For detailed Docker setup and configuration, see [DOCKER_SETUP.md](DOCKER_SETUP.md).

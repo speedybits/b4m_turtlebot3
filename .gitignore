@@ -55,4 +55,6 @@ resource/
 .vscode/
 *.sublime-workspace
 *.sublime-project
+
+# B4M API token
 b4m_api_token.txt

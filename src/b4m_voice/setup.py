@@ -16,7 +16,11 @@ setup(
         ('lib/' + package_name, ['scripts/voice_control']),
         ('lib/' + package_name, ['test/b4m_voice_test.py']),
     ],
-    install_requires=['setuptools'],
+    install_requires=[
+        'setuptools',
+        'SpeechRecognition>=3.8.1',
+        'PyAudio>=0.2.11',  # Required for microphone input
+    ],
     zip_safe=True,
     maintainer='user',
     maintainer_email='user@todo.todo',

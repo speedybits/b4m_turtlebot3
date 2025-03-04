@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y \
     ros-humble-geometry-msgs \
     ros-humble-nav-msgs \
     ros-humble-sensor-msgs \
+    python3-pyaudio \
+    portaudio19-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Set up workspace
@@ -18,7 +20,8 @@ COPY . .
 RUN pip3 install --no-cache-dir \
     pytest \
     flake8 \
-    bike4py
+    bike4py \
+    SpeechRecognition>=3.8.1
 
 # Build the workspace
 RUN /bin/bash -c '. /opt/ros/humble/setup.bash && colcon build --packages-select b4m_bridge b4m_voice'
