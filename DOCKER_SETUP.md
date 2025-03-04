@@ -46,28 +46,6 @@ To enter the Docker container:
 docker compose exec ros2_dev bash
 ```
 
-#### Running ROS2 Commands
-
-Once inside the container, you can run ROS2 commands. The environment is already set up with:
-- ROS2 Humble sourced
-- Workspace packages built and sourced
-- All dependencies installed
-
-Common commands:
-```bash
-# List available packages
-ros2 pkg list | grep b4m
-
-# List available topics
-ros2 topic list
-
-# Run nodes from b4m_bridge
-ros2 run b4m_bridge <node_name>
-
-# Run nodes from b4m_voice
-ros2 run b4m_voice <node_name>
-```
-
 #### Development Workflow
 
 1. Make changes to the code on your host machine
@@ -174,10 +152,6 @@ docker compose down
 # Rebuild the container (after changes to Dockerfile)
 docker compose build --no-cache
 ```
-
-## Running ROS2 Commands
-
-All ROS2 commands should be run inside the container.
 
 ## Troubleshooting
 
