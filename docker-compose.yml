@@ -1,9 +1,16 @@
 services:
   ros2_dev:
-    build: .
+    build:
+      context: .
+      args:
+        # Set to true only on Linux when using real microphone
+        INSTALL_AUDIO: false
     volumes:
       - .:/workspace
     environment:
       - ROS_DOMAIN_ID=0
-    network_mode: host
+    # Host network mode works differently on Mac vs Linux
+    # On Mac, ports must be explicitly published
+    ports:
+      - "11311:11311"  # ROS master port
     command: tail -f /dev/null  # Keep container running

@@ -6,9 +6,24 @@ This document describes how to set up and use the Docker development environment
 
 - Docker installed on your system
   - For Mac users: Install Docker Desktop from https://www.docker.com/products/docker-desktop
-  - Ensure Docker Desktop is running (check the whale icon in the menu bar)
+  - For Linux users: Install Docker Engine and Docker Compose
 - Docker Compose installed on your system (included with Docker Desktop for Mac)
 - Git with SSH access configured
+
+## Platform-Specific Setup
+
+### Mac Users
+- Ensure Docker Desktop is running (check the whale icon in the menu bar)
+- Voice control will run in simulation mode only (no microphone needed)
+- ROS2 communication uses port forwarding instead of host network mode
+
+### Linux Users
+- Voice control can use either simulation mode or real microphone input
+- To use real microphone input:
+  1. Edit docker-compose.yml and set INSTALL_AUDIO: true
+  2. Rebuild the container with: docker compose build
+  3. Add your user to the audio group: sudo usermod -a -G audio $USER
+  4. Log out and log back in for group changes to take effect
 
 ## Project Structure
 
@@ -39,26 +54,8 @@ The build process will:
 - Install Python packages including `bike4py`
 - Build the workspace using colcon
 
-### Using the Environment
+Follow the instructions in @b4m_readme.md to test the environment.
 
-#### Entering the Container
-
-To enter the Docker container:
-```bash
-docker compose exec ros2_dev bash
-```
-
-#### Development Workflow
-
-1. Make changes to the code on your host machine
-2. Rebuild the workspace in the container:
-```bash
-docker compose exec ros2_dev bash -c "cd /workspace && colcon build"
-```
-3. Source the updated workspace:
-```bash
-source /workspace/install/setup.bash
-```
 
 ### Container Configuration
 

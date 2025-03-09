@@ -106,25 +106,57 @@ Before proceeding, make sure you have Docker installed and configured. For detai
 
 ## Quick Start
 
-1. Clone the repository:
-```bash
-git clone git@github.com:speedybits/b4m_turtlebot3.git
-cd b4m_turtlebot3
-```
+1. Follow the setup instructions in [DOCKER_SETUP.md](DOCKER_SETUP.md) to install Docker and configure your environment.
 
-2. Set up your B4M API token as described in the Prerequisites section.
+2. Set up your B4M API token as described in the "Setting up B4M API Token" section above.
 
-3. Run the development launch script:
+3. Use the development launch script to set up and build the environment:
 ```bash
 ./b4m_dev_launch.sh
 ```
-
-The script will:
-- Start the Docker container if it's not running (with all dependencies pre-installed)
+This script will:
+- Start the Docker container if it's not running
 - Build the ROS2 packages
 - Provide instructions for launching the nodes
 
 4. Follow the launch instructions provided by the script to start the bridge and voice nodes in separate terminals.
+
+### Manual Launch (Alternative)
+
+If you prefer to launch components manually instead of using the script:
+
+1. Start a new terminal for the bridge node:
+```bash
+docker compose exec ros2_dev bash
+source /opt/ros/humble/setup.bash
+source /workspace/install/setup.bash
+ros2 run b4m_bridge b4m_bridge
+```
+
+2. Start another terminal for the voice control node:
+```bash
+docker compose exec ros2_dev bash
+source /opt/ros/humble/setup.bash
+source /workspace/install/setup.bash
+ros2 run b4m_voice voice_control
+```
+
+Note: We recommend using `b4m_dev_launch.sh` whenever possible as it handles environment setup and provides clear instructions.
+
+### Testing Voice Control
+Once both nodes are running, you can:
+
+1. Test voice commands (Linux only):
+   - Say "move forward" to initiate forward movement
+   - Say "stop" to halt the robot
+   - Say "turn left" or "turn right" for rotation
+
+2. Test simulated commands (Mac and Linux):
+   - Use the ROS2 command line to publish commands:
+     ```bash
+     ros2 topic pub /speaker/speech_input std_msgs/msg/String "data: 'move forward'"
+     ros2 topic pub /speaker/speech_input std_msgs/msg/String "data: 'stop'"
+     ```
 
 ## Development Guide
 
@@ -145,23 +177,6 @@ The script will:
 2. After making changes, run the development launch script again to rebuild:
 ```bash
 ./b4m_dev_launch.sh
-```
-
-### Testing Voice Control
-Once both nodes are running, you can:
-
-1. Test voice commands (Linux only):
-   - Say "move forward" to initiate forward movement
-   - Say "stop" to halt the robot
-   - Say "turn left" or "turn right" for rotation
-   - Say "status" to get the current robot state
-
-2. Use text commands instead of voice:
-```bash
-ros2 topic pub --once /text_commands std_msgs/msg/String "data: 'move forward'"
-ros2 topic pub --once /text_commands std_msgs/msg/String "data: 'stop'"
-ros2 topic pub --once /text_commands std_msgs/msg/String "data: 'turn left'"
-ros2 topic pub --once /text_commands std_msgs/msg/String "data: 'status'"
 ```
 
 ### Monitoring the System
