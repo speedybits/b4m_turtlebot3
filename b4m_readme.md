@@ -16,10 +16,20 @@ It'll want an API token. The current place to get that is from Chrome (or your f
 
 The token will unfortunately only last a day or two, it seems, and then you'll want to retrieve a new token from the same spot.
 
-Create a file named `b4m_api_token.txt` in the project root with your B4M refresh token:
-```bash
-echo "your_b4m_refresh_token" > b4m_api_token.txt
-```
+Create a file named `b4m_api_token.txt` in the project root with your B4M refresh token. You can do this in one of two ways:
+
+1. Using a text editor (recommended):
+   - Open a new file named `b4m_api_token.txt` in your preferred text editor
+   - Paste your refresh token exactly as it appears in the browser
+   - Save the file
+
+2. Using the terminal:
+   ```bash
+   cat << 'EOF' > b4m_api_token.txt
+   your_b4m_refresh_token
+   EOF
+   ```
+   Replace `your_b4m_refresh_token` with your actual token. The single quotes around EOF will preserve any special characters in the token.
 
 This token is required for the bridge node to communicate with the robot. Contact your system administrator if you need a token.
 
@@ -29,6 +39,48 @@ The voice control node requires several dependencies that are automatically inst
 - Python SpeechRecognition library
 - PyAudio for microphone input
 - PortAudio system library
+
+### Voice Control Setup
+
+The voice control system has different capabilities depending on your operating system:
+
+#### macOS Users
+On macOS, voice control is available in simulation mode only:
+
+```bash
+# Launch with simulation mode (recommended for macOS)
+ros2 launch b4m_voice b4m_voice.launch.py
+```
+
+#### Ubuntu Linux Users
+On Ubuntu, you can use both simulation mode and real microphone input:
+
+1. Setup audio permissions:
+```bash
+sudo usermod -a -G audio $USER
+# Log out and log back in for changes to take effect
+```
+
+2. Choose your launch mode:
+```bash
+# Launch with simulation mode
+ros2 launch b4m_voice b4m_voice.launch.py
+
+# Launch with real microphone (Ubuntu only)
+ros2 launch b4m_voice b4m_voice.launch.py use_simulation:=false
+```
+
+#### Voice Commands
+Available voice commands in both simulation and real microphone modes:
+- "move forward" - Start moving forward
+- "stop" - Stop movement
+- "turn left/right" - Rotate in place
+- "status" - Get robot status
+
+#### Troubleshooting
+- For simulation mode issues, check the ROS2 logs
+- For microphone issues on Ubuntu, see [DOCKER_SETUP.md](DOCKER_SETUP.md)
+- MacOS users should use simulation mode only
 
 ## Why Docker?
 

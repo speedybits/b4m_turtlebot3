@@ -5,7 +5,9 @@ This document describes how to set up and use the Docker development environment
 ## Prerequisites
 
 - Docker installed on your system
-- Docker Compose installed on your system
+  - For Mac users: Install Docker Desktop from https://www.docker.com/products/docker-desktop
+  - Ensure Docker Desktop is running (check the whale icon in the menu bar)
+- Docker Compose installed on your system (included with Docker Desktop for Mac)
 - Git with SSH access configured
 
 ## Project Structure
@@ -70,6 +72,8 @@ The Dockerfile includes:
   - sensor_msgs
   - cv_bridge
   - image_transport
+  - vision_opencv
+  - image_geometry
 - Python development tools
 - Custom entrypoint script for environment setup
 
@@ -126,6 +130,70 @@ No additional setup needed. GUI applications should work out of the box.
 ```bash
 xhost +localhost
 ```
+
+## Audio Setup for Voice Control
+
+### Ubuntu Linux Only
+1. The container will automatically install:
+   - PulseAudio and related libraries
+   - ALSA utilities
+   - PortAudio development libraries
+
+2. Add your user to the audio group:
+```bash
+sudo usermod -a -G audio $USER
+# Log out and log back in for changes to take effect
+```
+
+### Testing Audio Setup (Ubuntu Only)
+1. Run the audio test script:
+```bash
+docker compose exec ros2_dev python3 test_audio.py
+```
+
+2. The script will:
+   - List available audio devices
+   - Record a short audio sample
+   - Save it as test.wav
+   - Report any errors if they occur
+
+### Troubleshooting Audio (Ubuntu Only)
+- Verify user is in the audio group
+- Check if PulseAudio is running
+- Ensure audio device permissions are correct
+
+## Voice Control Setup
+
+### Platform Support
+- **macOS**: Only supports simulation mode. Real microphone input is not available.
+- **Ubuntu Linux**: Supports both simulation mode and real microphone input.
+
+### Voice Control Testing
+
+#### For All Platforms (Simulation Mode)
+```bash
+# Launch with simulation mode
+ros2 launch b4m_voice b4m_voice.launch.py
+```
+
+#### For Ubuntu Only (Real Microphone)
+1. First, ensure audio setup is complete (see Audio Setup section above)
+2. Launch with real microphone:
+```bash
+ros2 launch b4m_voice b4m_voice.launch.py use_simulation:=false
+```
+
+### Troubleshooting
+
+#### Simulation Mode Issues
+- Check ROS2 node status: `ros2 node list`
+- Verify the launch file parameters
+- Check ROS2 logs for errors
+
+#### Real Microphone Issues (Ubuntu Only)
+- Verify audio group membership
+- Check if microphone is detected in the container
+- Check system audio settings
 
 ## Development Workflow
 
