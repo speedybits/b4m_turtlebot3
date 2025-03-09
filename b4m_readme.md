@@ -8,7 +8,7 @@ This repository contains the ROS2 packages for the B4M TurtleBot3 project, focus
 
 1. Docker installed and configured (see [DOCKER_SETUP.md](DOCKER_SETUP.md))
 2. B4M API token (required for robot communication)
-3. Working microphone (for voice control)
+3. For Ubuntu Linux only: Working microphone (optional, for voice control with real audio input)
 
 ### Setting up B4M API Token
 
@@ -35,27 +35,38 @@ This token is required for the bridge node to communicate with the robot. Contac
 
 ### Voice Control Dependencies
 
-The voice control node requires several dependencies that are automatically installed in the Docker image:
-- Python SpeechRecognition library
+The voice control system's dependencies vary based on your operating system and usage mode, all of which are automatically installed in the Docker image:
+
+#### For All Users (Mac and Linux)
+No additional Python packages are required for simulation mode, which uses ROS2 topics for command input.
+
+#### For Ubuntu Linux Users (Optional)
+Only needed when using real microphone input:
+- Python SpeechRecognition library (for processing real voice input)
 - PyAudio for microphone input
 - PortAudio system library
 
+Note: Mac users run in simulation mode only and don't need any of these audio-related dependencies.
+
 ### Voice Control Setup
 
-The voice control system has different capabilities depending on your operating system:
+The voice control system has different requirements and capabilities depending on your operating system:
 
 #### macOS Users
-On macOS, voice control is available in simulation mode only:
+On macOS, voice control operates in simulation mode only and does not use a microphone:
+- No microphone setup is required
+- Commands are simulated through software
+- Perfect for testing and development
 
 ```bash
-# Launch with simulation mode (recommended for macOS)
+# Launch with simulation mode (macOS default)
 ros2 launch b4m_voice b4m_voice.launch.py
 ```
 
 #### Ubuntu Linux Users
-On Ubuntu, you can use both simulation mode and real microphone input:
+On Ubuntu, you can use both simulation mode and real microphone input for voice commands:
 
-1. Setup audio permissions:
+1. Setup audio permissions for microphone access:
 ```bash
 sudo usermod -a -G audio $USER
 # Log out and log back in for changes to take effect
@@ -139,7 +150,7 @@ The script will:
 ### Testing Voice Control
 Once both nodes are running, you can:
 
-1. Test voice commands:
+1. Test voice commands (Linux only):
    - Say "move forward" to initiate forward movement
    - Say "stop" to halt the robot
    - Say "turn left" or "turn right" for rotation
