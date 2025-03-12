@@ -7,6 +7,7 @@ This repository contains the ROS2 packages for the B4M TurtleBot3 project, focus
 ## Prerequisites
 
 1. Docker installed and configured (see [DOCKER_SETUP.md](DOCKER_SETUP.md))
+   - **Mac Users**: Make sure to start Docker Desktop from Launchpad before running any commands
 2. B4M API token (required for robot communication)
 3. For Ubuntu Linux only: Working microphone (optional, for voice control with real audio input)
 
@@ -107,23 +108,51 @@ Before proceeding, make sure you have Docker installed and configured. For detai
 ## Quick Start
 
 1. Follow the setup instructions in [DOCKER_SETUP.md](DOCKER_SETUP.md) to install Docker and configure your environment.
+   - **Mac Users**: Ensure Docker Desktop is running by launching it from your Applications or Launchpad
+   - **Linux Users**: Ensure the Docker daemon is running with `sudo systemctl status docker`
 
 2. Set up your B4M API token as described in the "Setting up B4M API Token" section above.
 
-3. Use the development launch script to set up and build the environment:
+3. Use the development launch script to set up the environment:
 ```bash
 ./b4m_dev_launch.sh
 ```
 This script will:
 - Start the Docker container if it's not running
 - Build the ROS2 packages
-- Provide instructions for launching the nodes
+- Show instructions for launching nodes and sending commands
 
-4. Follow the launch instructions provided by the script to start the bridge and voice nodes in separate terminals.
+4. Launch the nodes in separate terminals:
+```bash
+# Terminal 1: Launch the bridge node
+./b4m_dev_launch.sh bridge
+
+# Terminal 2: Launch the voice control node
+./b4m_dev_launch.sh voice
+```
+
+5. Send voice commands from any terminal:
+```bash
+# Move the robot forward
+./b4m_dev_launch.sh send "move forward"
+
+# Stop the robot
+./b4m_dev_launch.sh send "stop"
+
+# See all available commands
+./b4m_dev_launch.sh help
+```
+
+### Available Voice Commands
+- "move forward" - Start moving forward
+- "stop" - Stop movement
+- "turn left" - Rotate left
+- "turn right" - Rotate right
+- "status" - Get robot status
 
 ### Manual Launch (Alternative)
 
-If you prefer to launch components manually instead of using the script:
+If you need to launch components manually instead of using the script:
 
 1. Start a new terminal for the bridge node:
 ```bash
@@ -141,7 +170,7 @@ source /workspace/install/setup.bash
 ros2 run b4m_voice voice_control
 ```
 
-Note: We recommend using `b4m_dev_launch.sh` whenever possible as it handles environment setup and provides clear instructions.
+Note: We recommend using `b4m_dev_launch.sh` as it simplifies the launch process into single commands.
 
 ### Testing Voice Control
 Once both nodes are running, you can:

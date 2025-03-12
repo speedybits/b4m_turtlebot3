@@ -3,7 +3,6 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
-import speech_recognition as sr
 
 class VoiceControlNode(Node):
     def __init__(self):
@@ -28,6 +27,8 @@ class VoiceControlNode(Node):
             )
             self.get_logger().info('Voice Control Node initialized in SIMULATION mode')
         else:
+            # Import speech recognition only when needed
+            import speech_recognition as sr
             # Initialize speech recognizer for real microphone
             self.recognizer = sr.Recognizer()
             # Create a timer for continuous speech recognition
